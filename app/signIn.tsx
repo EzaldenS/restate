@@ -10,10 +10,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SignIn() {
   const {refetch, isLogged, loading} = useGlobalContext();
   const router = useRouter();
-  console.log('🔴 SignIn - loading:', loading, 'isLogged:', isLogged);
 
   if(!loading && isLogged){
-    console.log('🔴 SignIn - user logged in, redirecting to tabs');
     return <Redirect href="/(root)/(tabs)" />;
   }
 
@@ -21,28 +19,28 @@ export default function SignIn() {
     try {
       const result = await login();
       if (result) {
-        console.log("Login successful");
+        // Refresh the global context to update authentication state
+        await refetch();
         router.replace("/(root)/(tabs)");
+      } else {
+        Alert.alert("Error", "Login failed. Please try again.");
       }
     } catch (error) {
-      Alert.alert("Error", error instanceof Error ? error.message : "Login failed");
-      console.log("Login failed");
+      const errorMessage = error instanceof Error ? error.message : "Login failed";
+      Alert.alert("Error", errorMessage);
     }
   };
 
   if (!loading && !isLogged) {
-    console.log('🔴 SignIn - showing sign-in UI');
     return (
       <SafeAreaView className="bg-white h-full">
         <ScrollView
-          contentContainerStyle={{
-            height: "100%",
-          }}
-          bounces={true}
+          showsVerticalScrollIndicator={false}
+        contentContainerClassName="p-5 pb-2"
         >
           <Image
             source={images.onboarding}
-            className="w-full h-4/6"
+            className="w-full h-[550px]"
             resizeMode="contain"
           />
 
@@ -62,7 +60,7 @@ export default function SignIn() {
 
             <TouchableOpacity
               onPress={handleLogin}
-              className="bg-white shadow-md shadow-zinc-300 rounded-full w-full py-4 mt-5"
+              className="bg-white shadow-md shadow-zinc-500 rounded-full w-full py-4 my-5 mb-5"
             >
               <View className="flex flex-row items-center justify-center">
                 <Image
@@ -75,6 +73,7 @@ export default function SignIn() {
                 </Text>
               </View>
             </TouchableOpacity>
+
           </View>
         </ScrollView>
       </SafeAreaView>

@@ -45,17 +45,7 @@ export const useAppwrite = <T, P extends Record<string, string | number>>({
 
   useEffect(() => {
     if (!skip) {
-      // Add timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        if (loading) {
-          setError("Request timed out");
-          setLoading(false);
-        }
-      }, 10000); // 10 second timeout
-
       fetchData(params);
-
-      return () => clearTimeout(timeoutId);
     }
   }, []);
 

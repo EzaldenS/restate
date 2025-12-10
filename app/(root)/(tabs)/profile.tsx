@@ -48,7 +48,7 @@ const SettingsItem = ({
 
 const Profile = () => {
   const { user, refetch } = useGlobalContext();
-
+  console.log("Profile user avatar:", user?.avatar);
   // Debug: Log user data when component mounts
   useEffect(() => {
     if (user) {

@@ -1,42 +1,157 @@
-import { ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
+  Button,
+} from "react-native";
+import { useEffect } from "react";
+import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function Index() {
-  console.log('🟢 Home Index - rendering home page content');
+import icons from "@/constants/icons";
+
+import Search from "@/components/Search";
+import Filters from "@/components/Filters";
+import NoResults from "@/components/NoResults";
+import { Card, FeaturedCard } from "@/components/Cards";
+
+import { useAppwrite } from "@/lib/useAppwrite";
+import { useGlobalContext } from "@/lib/global-provider";
+import { getLatestProperties, getProperties } from "@/lib/appwrite";
+
+const Home = () => {
+  const { user } = useGlobalContext();
+
+  const params = useLocalSearchParams<{ query?: string; filter?: string }>();
+
+  const { data: latestProperties, loading: latestPropertiesLoading } =
+    useAppwrite({
+      fn: getLatestProperties,
+    });
+
+  const {
+    data: properties,
+    refetch,
+    loading,
+  } = useAppwrite({
+    fn: getProperties,
+    params: {
+      filter: params.filter!,
+      query: params.query!,
+      limit: 6,
+    },
+    skip: true,
+  });
+
+  useEffect(() => {
+    refetch({
+      filter: params.filter!,
+      query: params.query!,
+      limit: 6,
+    });
+  }, [params.filter, params.query]);
+
+  const handleCardPress = (id: string) => router.push(`/properties/${id}`);
+
   return (
     <SafeAreaView className="h-full bg-white">
-      <ScrollView
+      <FlatList
+        data={properties}
+        numColumns={2}
+        renderItem={({ item }) => (
+          <Card item={item} onPress={() => handleCardPress(item.$id)} />
+        )}
+        keyExtractor={(item) => item.$id}
+        contentContainerClassName="pb-32"
+        columnWrapperClassName="flex gap-5 px-5"
         showsVerticalScrollIndicator={false}
-        contentContainerClassName="p-5 pb-32"
-      >
-        <View
-          className="flex-1 justify-center items-center"
-        >
-        <Text style={{fontSize: 24, fontWeight: 'bold', marginBottom: 20, color: 'red'}}>DEBUG: Welcome to Real Scout</Text>
-        <Text style={{fontSize: 16, textAlign: 'center', color: '#666', marginBottom: 40}}>
-          Find your ideal home with our comprehensive property search
-        </Text>
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator size="large" className="text-primary-300 mt-5" />
+          ) : (
+            <NoResults />
+          )
+        }
+        ListHeaderComponent={() => (
+          <View className="px-5">
+            <View className="flex flex-row items-center justify-between mt-5">
+              <View className="flex flex-row">
+                <Image
+                  source={{ uri: user?.avatar }}
+                  className="size-12 rounded-full"
+                />
 
-        {/* Add more content to test scrolling */}
-        {[...Array(20)].map((_, i) => (
-          <Text key={i} style={{fontSize: 16, marginBottom: 10, color: '#333'}}>
-            Property Listing {i + 1}
-          </Text>
-        ))}
+                <View className="flex flex-col items-start ml-2 justify-center">
+                  <Text className="text-xs font-rubik text-black-100">
+                    Good Morning
+                  </Text>
+                  <Text className="text-base font-rubik-medium text-black-300">
+                    {user?.name}
+                  </Text>
+                </View>
+              </View>
+              <Image source={icons.bell} className="size-6" />
+            </View>
 
-        <Text style={{fontSize: 18, fontWeight: 'bold', marginTop: 20, color: '#0061ff'}}>
-          Featured Properties
-        </Text>
+            <Search />
 
-        {[...Array(10)].map((_, i) => (
-          <View key={i} style={{width: '100%', padding: 15, marginBottom: 10, backgroundColor: 'white', borderRadius: 8}}>
-            <Text style={{fontSize: 16, fontWeight: '600'}}>Luxury Apartment {i + 1}</Text>
-            <Text style={{fontSize: 14, color: '#666'}}>2 Bedrooms, 2 Bathrooms</Text>
-            <Text style={{fontSize: 14, color: '#0061ff'}}>$1,200,000</Text>
+            <View className="my-5">
+              <View className="flex flex-row items-center justify-between">
+                <Text className="text-xl font-rubik-bold text-black-300">
+                  Featured
+                </Text>
+                <TouchableOpacity>
+                  <Text className="text-base font-rubik-bold text-primary-300">
+                    See all
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {latestPropertiesLoading ? (
+                <ActivityIndicator size="large" className="text-primary-300" />
+              ) : !latestProperties || latestProperties.length === 0 ? (
+                <NoResults />
+              ) : (
+                <FlatList
+                  data={latestProperties}
+                  renderItem={({ item }) => (
+                    <FeaturedCard
+                      item={item}
+                      onPress={() => handleCardPress(item.$id)}
+                    />
+                  )}
+                  keyExtractor={(item) => item.$id}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerClassName="flex gap-5 mt-5"
+                />
+              )}
+            </View>
+
+            {/* <Button title="seed" onPress={seed} /> */}
+
+            <View className="mt-5">
+              <View className="flex flex-row items-center justify-between">
+                <Text className="text-xl font-rubik-bold text-black-300">
+                  Our Recommendation
+                </Text>
+                <TouchableOpacity>
+                  <Text className="text-base font-rubik-bold text-primary-300">
+                    See all
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Filters />
+            </View>
           </View>
-        ))}
-      </View>
-    </ScrollView>
-  </SafeAreaView>
-);
-}
+        )}
+      />
+    </SafeAreaView>
+  );
+};
+
+export default Home;

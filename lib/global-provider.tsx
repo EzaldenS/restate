@@ -1,5 +1,6 @@
-import React, { createContext, ReactNode, useContext } from "react";
+import React, { createContext, ReactNode, useContext, useState } from "react";
 
+import { defaultFilters, FilterShape } from "../components/types";
 import { getCurrentUser } from "./appwrite";
 import { useAppwrite } from "./useAppwrite";
 
@@ -9,6 +10,10 @@ interface GlobalContextType {
   loading: boolean;
   error: string | null;
   refetch: (params?: Record<string, string | number>) => Promise<void>;
+  filters: FilterShape;
+  setFilters: (filters: FilterShape) => void;
+  showFilterModal: boolean;
+  setShowFilterModal: (show: boolean) => void;
 }
 
 interface User {
@@ -41,6 +46,16 @@ export const GlobalProvider = ({ children }: GlobalProviderProps) => {
     return originalRefetch(params || {});
   };
 
+  // Filter state management
+  const [filters, setFilters] = useState<FilterShape>(() => {
+    console.log('GlobalProvider: Initializing filters with default values', defaultFilters);
+    return defaultFilters;
+  });
+  const [showFilterModal, setShowFilterModal] = useState(false);
+
+  console.log('GlobalProvider: Current filters state', filters);
+  console.log('GlobalProvider: showFilterModal state', showFilterModal);
+
   return (
     <GlobalContext.Provider
       value={{
@@ -49,6 +64,10 @@ export const GlobalProvider = ({ children }: GlobalProviderProps) => {
         loading,
         error,
         refetch,
+        filters,
+        setFilters,
+        showFilterModal,
+        setShowFilterModal,
       }}
     >
       {children}

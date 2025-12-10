@@ -8,7 +8,7 @@ import {
   Button,
 } from "react-native";
 import { useEffect } from "react";
-import { router, useLocalSearchParams } from "expo-router";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import icons from "@/constants/icons";
@@ -108,6 +108,11 @@ const Home = () => {
                     See all
                   </Text>
                 </TouchableOpacity>
+                <Link href="/test-filter">
+                  <Text className="text-base font-rubik-bold text-primary-300">
+                    Test Filter
+                  </Text>
+                </Link>
               </View>
 
               {latestPropertiesLoading ? (

@@ -8,7 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test": "jest components/FilterModal.test.tsx"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -42,10 +43,19 @@
     "use-debounce": "^10.0.6"
   },
   "devDependencies": {
+    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.0",
+    "babel-jest": "^30.2.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
     "prettier-plugin-tailwindcss": "0.5.11",
+    "react-test-renderer": "^19.1.0",
     "tailwindcss": "3.4.17",
     "typescript": "~5.9.2"
   },

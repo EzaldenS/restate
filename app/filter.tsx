@@ -1,9 +1,15 @@
-import { FilterShape } from '@/components/types';
-import { useGlobalContext } from '@/lib/global-provider';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FilterShape } from "@/components/types";
+import { useGlobalContext } from "@/lib/global-provider";
+import { router } from "expo-router";
+import React, { useState } from "react";
+import {
+  SafeAreaView,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Subcomponents (same as FilterModal but simplified for page)
 const BackButton = () => (
@@ -18,13 +24,19 @@ const BackButton = () => (
 );
 
 const ResetButton = ({ onPress }: { onPress: () => void }) => (
-  <TouchableOpacity onPress={onPress} accessibilityRole="button" accessibilityLabel="Reset all filters">
+  <TouchableOpacity
+    onPress={onPress}
+    accessibilityRole="button"
+    accessibilityLabel="Reset all filters"
+  >
     <Text className="text-primary-200 font-rubik-medium text-sm">Reset</Text>
   </TouchableOpacity>
 );
 
 const SectionTitle = ({ title }: { title: string }) => (
-  <Text className="text-black-300 font-rubik-medium text-base mb-4">{title}</Text>
+  <Text className="text-black-300 font-rubik-medium text-base mb-4">
+    {title}
+  </Text>
 );
 
 const Pill = ({
@@ -39,15 +51,21 @@ const Pill = ({
   <TouchableOpacity
     onPress={onPress}
     className={`px-4 py-2 rounded-full mr-2 mb-2 ${
-      isSelected
-        ? 'bg-primary-200'
-        : 'bg-white border border-slate-200'
+      isSelected ? "bg-primary-200" : "bg-white border border-slate-200"
     }`}
     accessibilityRole="button"
-    accessibilityLabel={`${label} filter ${isSelected ? 'selected' : 'not selected'}`}
+    accessibilityLabel={`${label} filter ${
+      isSelected ? "selected" : "not selected"
+    }`}
     accessibilityHint="Tap to toggle selection"
   >
-    <Text className={`text-sm ${isSelected ? 'text-white font-rubik-medium' : 'text-black-300 font-rubik'}`}>
+    <Text
+      className={`text-sm ${
+        isSelected
+          ? "text-white font-rubik-medium"
+          : "text-black-300 font-rubik"
+      }`}
+    >
       {label}
     </Text>
   </TouchableOpacity>
@@ -71,19 +89,21 @@ const Counter = ({
         onPress={onDecrement}
         disabled={value <= 0}
         className={`w-8 h-8 rounded-full border border-primary-200 items-center justify-center mr-2 ${
-          value <= 0 ? 'opacity-50' : ''
+          value <= 0 ? "opacity-50" : ""
         }`}
         accessibilityRole="button"
         accessibilityLabel={`Decrease ${label}`}
       >
         <Text className="text-primary-200 text-lg">−</Text>
       </TouchableOpacity>
-      <Text className="text-black-300 font-rubik-medium text-base w-8 text-center">{value}</Text>
+      <Text className="text-black-300 font-rubik-medium text-base w-8 text-center">
+        {value}
+      </Text>
       <TouchableOpacity
         onPress={onIncrement}
         disabled={value >= 10}
         className={`w-8 h-8 rounded-full border border-primary-200 items-center justify-center ml-2 ${
-          value >= 10 ? 'opacity-50' : ''
+          value >= 10 ? "opacity-50" : ""
         }`}
         accessibilityRole="button"
         accessibilityLabel={`Increase ${label}`}
@@ -124,20 +144,61 @@ const RangeSlider = ({
   formatValue?: (value: number) => string;
   showLabels?: boolean;
 }) => {
-  const [isSliding, setIsSliding] = useState(false);
+  const [activeThumb, setActiveThumb] = useState<number | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  const handleSlide = (newValues: [number, number]) => {
+  const handleThumbPress = (thumbIndex: number) => {
+    setActiveThumb(thumbIndex);
+  };
+
+  const handleContainerLayout = (event: any) => {
+    setContainerWidth(event.nativeEvent.layout.width);
+  };
+  const [localValues, setLocalValues] = useState<[number, number]>(values);
+
+  // Sync props when they change
+  React.useEffect(() => {
+    setLocalValues(values);
+  }, [values]);
+
+  const handleTouchMove = (event: any) => {
+    if (activeThumb === null) return;
+
+    const { locationX } = event.nativeEvent;
+    const percentage = Math.min(Math.max(locationX / containerWidth, 0), 1);
+    let newValue = min + percentage * (max - min);
+
+    const newValues: [number, number] = [...localValues];
+
+    if (activeThumb === 0 && newValue > localValues[1])
+      newValue = localValues[1];
+    if (activeThumb === 1 && newValue < localValues[0])
+      newValue = localValues[0];
+
+    newValues[activeThumb] = newValue;
+    setLocalValues(newValues);
     onValuesChange(newValues);
+  };
+
+  const handleTouchEnd = () => {
+    setActiveThumb(null);
   };
 
   return (
     <View className="mb-6">
       <Histogram />
-      <View className="relative">
+      <View
+        className="relative"
+        onLayout={handleContainerLayout}
+        onStartShouldSetResponder={() => true}
+        onMoveShouldSetResponder={() => true}
+        onResponderMove={handleTouchMove}
+        onResponderRelease={handleTouchEnd}
+      >
         {/* Track */}
         <View className="h-1 bg-slate-100 rounded-full relative">
           <View
-            className="absolute h-1 bg-primary-200 rounded-full"
+            className="absolute h-1  bg-primary-200 rounded-full"
             style={{
               left: `${((values[0] - min) / (max - min)) * 100}%`,
               right: `${100 - ((values[1] - min) / (max - min)) * 100}%`,
@@ -145,7 +206,7 @@ const RangeSlider = ({
           />
         </View>
 
-        {/* Thumbs - Original design */}
+        {/* Thumbs */}
         {[0, 1].map((index) => {
           const position = ((values[index] - min) / (max - min)) * 100;
           return (
@@ -154,12 +215,20 @@ const RangeSlider = ({
               className="absolute -top-2.5"
               style={{ left: `${position}%` }}
             >
-              <View className="w-5 h-5 bg-primary-200 rounded-full border-2 border-white" />
+              <TouchableOpacity
+                onPressIn={() => handleThumbPress(index)}
+                activeOpacity={0.8}
+                className="w-5 h-5 bg-primary-200 rounded-full border-2 border-white"
+              />
               {showLabels && (
                 <View className="absolute -bottom-6 left-1/2 -translate-x-1/2">
-                  <Text className="text-primary-200 text-xs font-rubik-medium">
-                    {formatValue ? formatValue(values[index]) : values[index]}
+                  
+                  <Text className="text-primary-200 text-xs font-rubik-medium w-12">
+                    {formatValue
+                      ? formatValue(Number(values[index].toFixed(0)))
+                      : values[index].toFixed(1)}
                   </Text>
+
                 </View>
               )}
             </View>
@@ -171,13 +240,13 @@ const RangeSlider = ({
 };
 
 const propertyTypes = [
-  'House',
-  'Apartment',
-  'Condo',
-  'Townhouse',
-  'Villa',
-  'Land',
-  'Commercial',
+  "House",
+  "Apartment",
+  "Condo",
+  "Townhouse",
+  "Villa",
+  "Land",
+  "Commercial",
 ];
 
 const FilterPage = () => {
@@ -187,7 +256,7 @@ const FilterPage = () => {
 
   const handleReset = () => {
     const defaultFilters = {
-      priceRange: [100, 500] as [number, number],
+      priceRange: [100, 10000] as [number, number],
       sizeRange: [1000, 3000] as [number, number],
       types: [] as string[],
       bedrooms: 0,
@@ -198,12 +267,12 @@ const FilterPage = () => {
 
   const handleApply = () => {
     setFilters(localFilters);
-    console.log('Filters applied:', localFilters);
+    console.log("Filters applied:", localFilters);
 
     // Always go to explore page to show filtered results
     // This ensures users see their filtered results regardless of where they came from
-    console.log('Redirecting to explore page to show filtered results');
-    router.replace('/explore');
+    console.log("Redirecting to explore page to show filtered results");
+    router.replace("/explore");
   };
 
   const togglePropertyType = (type: string) => {
@@ -216,12 +285,17 @@ const FilterPage = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" style={{ paddingTop: insets.top }}>
+    <SafeAreaView
+      className="flex-1 bg-white"
+      style={{ paddingTop: insets.top }}
+    >
       <View className="flex-1">
         {/* Header */}
         <View className="flex-row items-center justify-between px-6 mb-6">
           <BackButton />
-          <Text className="text-black-300 font-rubik-extra-bold text-xl">Filter</Text>
+          <Text className="text-black-300 font-rubik-extra-bold text-xl">
+            Filter
+          </Text>
           <ResetButton onPress={handleReset} />
         </View>
 
@@ -235,10 +309,12 @@ const FilterPage = () => {
           <View className="mb-6">
             <SectionTitle title="Price Range" />
             <RangeSlider
-              min={50}
-              max={1000}
+              min={0}
+              max={50000}
               values={localFilters.priceRange}
-              onValuesChange={(values) => setLocalFilters({ ...localFilters, priceRange: values })}
+              onValuesChange={(values) =>
+                setLocalFilters({ ...localFilters, priceRange: values })
+              }
               formatValue={(value) => `$${value}`}
             />
           </View>
@@ -265,20 +341,32 @@ const FilterPage = () => {
               label="Bedrooms"
               value={localFilters.bedrooms}
               onIncrement={() =>
-                setLocalFilters({ ...localFilters, bedrooms: Math.min(localFilters.bedrooms + 1, 10) })
+                setLocalFilters({
+                  ...localFilters,
+                  bedrooms: Math.min(localFilters.bedrooms + 1, 10),
+                })
               }
               onDecrement={() =>
-                setLocalFilters({ ...localFilters, bedrooms: Math.max(localFilters.bedrooms - 1, 0) })
+                setLocalFilters({
+                  ...localFilters,
+                  bedrooms: Math.max(localFilters.bedrooms - 1, 0),
+                })
               }
             />
             <Counter
               label="Bathrooms"
               value={localFilters.bathrooms}
               onIncrement={() =>
-                setLocalFilters({ ...localFilters, bathrooms: Math.min(localFilters.bathrooms + 1, 10) })
+                setLocalFilters({
+                  ...localFilters,
+                  bathrooms: Math.min(localFilters.bathrooms + 1, 10),
+                })
               }
               onDecrement={() =>
-                setLocalFilters({ ...localFilters, bathrooms: Math.max(localFilters.bathrooms - 1, 0) })
+                setLocalFilters({
+                  ...localFilters,
+                  bathrooms: Math.max(localFilters.bathrooms - 1, 0),
+                })
               }
             />
           </View>
@@ -287,10 +375,12 @@ const FilterPage = () => {
           <View className="mb-6">
             <SectionTitle title="Building Size (sq ft)" />
             <RangeSlider
-              min={500}
-              max={5000}
+              min={50}
+              max={10000}
               values={localFilters.sizeRange}
-              onValuesChange={(values) => setLocalFilters({ ...localFilters, sizeRange: values })}
+              onValuesChange={(values) =>
+                setLocalFilters({ ...localFilters, sizeRange: values })
+              }
               formatValue={(value) => `${value}`}
             />
           </View>
@@ -304,7 +394,9 @@ const FilterPage = () => {
             accessibilityRole="button"
             accessibilityLabel="Apply filters"
           >
-            <Text className="text-white font-rubik-extra-bold text-base">Set Filter</Text>
+            <Text className="text-white font-rubik-extra-bold text-base">
+              Set Filter
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

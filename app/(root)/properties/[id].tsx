@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import Comment from "@/components/Comment";
+import MapView from "@/components/MapView";
 import { facilities } from "@/constants/data";
 import icons from "@/constants/icons";
 import images from "@/constants/images";
@@ -263,10 +264,12 @@ const Property = () => {
               </Text>
             </View>
 
-            <Image
-              source={images.map}
-              className="h-52 w-full mt-5 rounded-xl"
-            />
+            {property?.geolocation && (
+              <MapView
+                geolocation={property.geolocation}
+                address={property.address}
+              />
+            )}
           </View>
 
           {(property?.reviews?.length ?? 0) > 0 && (

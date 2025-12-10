@@ -1,29 +1,69 @@
+import { router, useLocalSearchParams } from "expo-router";
 import {
+  Dimensions,
   FlatList,
   Image,
+  Platform,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
-  Platform,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
 
-import icons from "@/constants/icons";
-import images from "@/constants/images";
 import Comment from "@/components/Comment";
 import { facilities } from "@/constants/data";
+import icons from "@/constants/icons";
+import images from "@/constants/images";
 
-import { useAppwrite } from "@/lib/useAppwrite";
 import { getPropertyById } from "@/lib/appwrite";
+import { useAppwrite } from "@/lib/useAppwrite";
+
+// Define Property interface
+interface Property {
+  $id: string;
+  $sequence: number;
+  $collectionId: string;
+  $databaseId: string;
+  $createdAt: string;
+  $updatedAt: string;
+  $permissions: string[];
+  name: string;
+  type: string;
+  description: string;
+  address: string;
+  geolocation: string;
+  price: number;
+  area: number;
+  bedrooms: number;
+  bathrooms: number;
+  rating: number;
+  facilities: string[];
+  image: string;
+  agent: {
+    $id: string;
+    name: string;
+    email: string;
+    avatar: string;
+  };
+  reviews: Array<{
+    $id: string;
+    name: string;
+    avatar: string;
+    rating: number;
+    comment?: string;
+  }>;
+  gallery: Array<{
+    $id: string;
+    image: string;
+  }>;
+}
 
 const Property = () => {
   const { id } = useLocalSearchParams<{ id?: string }>();
 
   const windowHeight = Dimensions.get("window").height;
 
-  const { data: property } = useAppwrite({
+  const { data: property } = useAppwrite<Property | null, { id: string }>({
     fn: getPropertyById,
     params: {
       id: id!,
@@ -88,7 +128,7 @@ const Property = () => {
             <View className="flex flex-row items-center gap-2">
               <Image source={icons.star} className="size-5" />
               <Text className="text-black-200 text-sm mt-1 font-rubik-medium">
-                {property?.rating} ({property?.reviews.length} reviews)
+                {property?.rating} ({property?.reviews?.length ?? 0} reviews)
               </Text>
             </View>
           </View>
@@ -157,7 +197,7 @@ const Property = () => {
               Facilities
             </Text>
 
-            {property?.facilities.length > 0 && (
+            {(property?.facilities?.length ?? 0) > 0 && (
               <View className="flex flex-row flex-wrap items-start justify-start mt-2 gap-5">
                 {property?.facilities.map((item: string, index: number) => {
                   const facility = facilities.find(
@@ -190,7 +230,7 @@ const Property = () => {
             )}
           </View>
 
-          {property?.gallery.length > 0 && (
+          {(property?.gallery?.length ?? 0) > 0 && (
             <View className="mt-7">
               <Text className="text-black-300 text-xl font-rubik-bold">
                 Gallery
@@ -229,13 +269,13 @@ const Property = () => {
             />
           </View>
 
-          {property?.reviews.length > 0 && (
+          {(property?.reviews?.length ?? 0) > 0 && (
             <View className="mt-7">
               <View className="flex flex-row items-center justify-between">
                 <View className="flex flex-row items-center">
                   <Image source={icons.star} className="size-6" />
                   <Text className="text-black-300 text-xl font-rubik-bold ml-2">
-                    {property?.rating} ({property?.reviews.length} reviews)
+                    {property?.rating} ({(property?.reviews?.length ?? 0)})
                   </Text>
                 </View>
 
@@ -247,7 +287,7 @@ const Property = () => {
               </View>
 
               <View className="mt-5">
-                <Comment item={property?.reviews[0]} />
+                {property?.reviews?.[0] && <Comment item={property?.reviews?.[0] as any} />}
               </View>
             </View>
           )}

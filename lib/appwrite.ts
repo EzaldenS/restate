@@ -209,17 +209,118 @@ export async function getProperties({
   }
 }
 
-// write function to get property by id
-export async function getPropertyById({ id }: { id: string }) {
+export async function getPropertyById({ id: id }: { id: string }): Promise<{
+  $id: string;
+  $sequence: number;
+  $collectionId: string;
+  $databaseId: string;
+  $createdAt: string;
+  $updatedAt: string;
+  $permissions: string[];
+  name: string;
+  type: string;
+  description: string;
+  address: string;
+  geolocation: string;
+  price: number;
+  area: number;
+  bedrooms: number;
+  bathrooms: number;
+  rating: number;
+  facilities: string[];
+  image: string;
+  agent: {
+    $id: string;
+    name: string;
+    email: string;
+    avatar: string;
+  };
+  reviews: Array<{
+    $id: string;
+    name: string;
+    avatar: string;
+    rating: number;
+    comment?: string;
+  }>;
+  gallery: Array<{
+    $id: string;
+    image: string;
+  }>;
+} | null> {
   try {
-    const result = await databases.getDocument(
+    const property = await databases.getDocument(
       config.databaseId!,
       config.propertiesCollectionId!,
       id
     );
-    return result;
+
+    // get related reviews
+    const reviewsResult = await databases.listDocuments(
+      config.databaseId!,
+      config.reviewsCollectionId!,
+      [Query.equal("properties", id)]
+    );
+
+    // Get agent details
+    const agent = await databases.getDocument(
+      config.databaseId!,
+      config.agentsCollectionId!,
+      (property as any).agent
+    );
+
+    // Get gallery images - removed propertyId filter since galleries aren't linked to properties in schema
+    const galleryResult = await databases.listDocuments(
+      config.databaseId!,
+      config.galleriesCollectionId!
+    );
+
+    const propertyWithCustomFields = property as unknown as {
+      $id: string;
+      $sequence: number;
+      $collectionId: string;
+      $databaseId: string;
+      $createdAt: string;
+      $updatedAt: string;
+      $permissions: string[];
+      name: string;
+      type: string;
+      description: string;
+      address: string;
+      geolocation: string;
+      price: number;
+      area: number;
+      bedrooms: number;
+      bathrooms: number;
+      rating: number;
+      facilities: string[];
+      image: string;
+      agent: string;
+    };
+
+    return {
+      ...propertyWithCustomFields,
+      reviews: reviewsResult.documents as unknown as Array<{
+        $id: string;
+        name: string;
+        avatar: string;
+        rating: number;
+        comment?: string;
+      }>,
+      agent: agent as unknown as {
+        $id: string;
+        name: string;
+        email: string;
+        avatar: string;
+      },
+      gallery: galleryResult.documents as unknown as Array<{
+        $id: string;
+        image: string;
+      }>,
+    };
+
   } catch (error) {
     console.error(error);
     return null;
   }
 }
+

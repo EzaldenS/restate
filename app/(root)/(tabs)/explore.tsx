@@ -229,9 +229,9 @@ const Explore = () => {
                       filters.priceRange[1] < 50000) && (
                       <View className="bg-white px-2 py-1 rounded-full">
                         <Text className="text-xs text-black-300">
-                          Price: ${filters.priceRange[0].toFixed(0)} - $
+                          Price: {filters.priceRange[0].toFixed(0)} - $
                           {filters.priceRange[1].toFixed(0)}
-                        </Text>{" "}
+                        </Text>
                       </View>
                     )}
                     {(filters.sizeRange[0] > 1000 ||

@@ -1,7 +1,13 @@
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 import { defaultFilters, FilterShape } from "../components/types";
-import { getCurrentUser } from "./appwrite";
+import { account, getCurrentUser } from "./appwrite";
 import { useAppwrite } from "./useAppwrite";
 
 interface GlobalContextType {
@@ -37,9 +43,27 @@ export const GlobalProvider = ({ children }: GlobalProviderProps) => {
     refetch: originalRefetch,
   } = useAppwrite({
     fn: getCurrentUser,
+    skip: true, // Skip initial fetch to avoid guest user error
   });
 
   const isLogged = !!user;
+
+  // Check for existing session on mount and fetch user if session exists
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        // Try to get current session - if it succeeds, user is logged in
+        await account.getSession("current");
+        // If session exists, fetch user data
+        await originalRefetch({});
+      } catch (sessionError) {
+        // No active session - user is a guest, this is expected
+        console.log("No active session, user is a guest");
+      }
+    };
+
+    checkSession();
+  }, []);
 
   // Create a wrapper refetch function that works with optional parameters
   const refetch = async (params?: Record<string, string | number>) => {
@@ -48,13 +72,16 @@ export const GlobalProvider = ({ children }: GlobalProviderProps) => {
 
   // Filter state management
   const [filters, setFilters] = useState<FilterShape>(() => {
-    console.log('GlobalProvider: Initializing filters with default values', defaultFilters);
+    console.log(
+      "GlobalProvider: Initializing filters with default values",
+      defaultFilters,
+    );
     return defaultFilters;
   });
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  console.log('GlobalProvider: Current filters state', filters);
-  console.log('GlobalProvider: showFilterModal state', showFilterModal);
+  console.log("GlobalProvider: Current filters state", filters);
+  console.log("GlobalProvider: showFilterModal state", showFilterModal);
 
   return (
     <GlobalContext.Provider

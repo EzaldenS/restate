@@ -97,7 +97,7 @@ const Property = () => {
             <View className="flex flex-row items-center w-full justify-between">
               <TouchableOpacity
                 onPress={() => router.back()}
-                className="flex flex-row bg-primary-200 rounded-full size-11 items-center justify-center"
+                className="flex flex-row bg-blue-100 rounded-full size-11 items-center justify-center"
               >
                 <Image source={icons.backArrow} className="size-5" />
               </TouchableOpacity>
@@ -202,7 +202,7 @@ const Property = () => {
               <View className="flex flex-row flex-wrap items-start justify-start mt-2 gap-5">
                 {property?.facilities.map((item: string, index: number) => {
                   const facility = facilities.find(
-                    (facility) => facility.title === item
+                    (facility) => facility.title === item,
                   );
 
                   return (
@@ -278,7 +278,7 @@ const Property = () => {
                 <View className="flex flex-row items-center">
                   <Image source={icons.star} className="size-6" />
                   <Text className="text-black-300 text-xl font-rubik-bold ml-2">
-                    {property?.rating} ({(property?.reviews?.length ?? 0)})
+                    {property?.rating} ({property?.reviews?.length ?? 0})
                   </Text>
                 </View>
 
@@ -290,7 +290,9 @@ const Property = () => {
               </View>
 
               <View className="mt-5">
-                {property?.reviews?.[0] && <Comment item={property?.reviews?.[0] as any} />}
+                {property?.reviews?.[0] && (
+                  <Comment item={property?.reviews?.[0] as any} />
+                )}
               </View>
             </View>
           )}
